@@ -133,6 +133,7 @@ func RunMyProgram() {
 	var remain_hw HotWater
 	var remain_gb GroundBean
 	cups := 4 * CupsCoffee
+	var mu_coffee sync.Mutex
 	go func() {
 		for {
 			select {
@@ -146,13 +147,21 @@ func RunMyProgram() {
 				return
 			}
 			if remain_hw >= cups.HotWater() && remain_gb >= cups.GroundBeans() {
+				wg.Add(1)
 				remain_hw -= cups.HotWater()
 				remain_gb -= cups.GroundBeans()
-				coffee += brew(ctx, cups.HotWater(), cups.GroundBeans())
+				go func() {
+					mu_coffee.Lock()
+					defer mu_coffee.Unlock()
+					coffee += brew(ctx, cups.HotWater(), cups.GroundBeans())
+					wg.Done()
+				}()
 			}
 		}
 	}()
+	go func() {
 
+	}()
 	wg.Wait()
 	quit <- true
 	close(ch_HotWater)
