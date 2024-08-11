@@ -26,11 +26,11 @@ func main() {
 	ch_i := make(chan int)
 	ch_v := make(chan int)
 	var wg sync.WaitGroup
-	for i := 1; i < 15; i++ {
-		wg.Add(1)
-		go fib(float64(i), ch_i, ch_v, &wg)
-	}
 	go func() {
+		for i := 1; i < 15; i++ {
+			wg.Add(1)
+			go fib(float64(i), ch_i, ch_v, &wg)
+		}
 		wg.Wait()
 		close(ch_i)
 		close(ch_v)

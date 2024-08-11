@@ -1,0 +1,217 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"runtime/trace"
+	"sync"
+	"time"
+)
+
+type (
+	Bean       int
+	GroundBean int
+	Water      int
+	HotWater   int
+	Coffee     int
+)
+
+const (
+	GramBeans          Bean       = 1
+	GramGroundBeans    GroundBean = 1
+	MilliLiterWater    Water      = 1
+	MilliLiterHotWater HotWater   = 1
+	CupsCoffee         Coffee     = 1
+)
+
+func (w Water) String() string {
+	return fmt.Sprintf("%d[ml] water", int(w))
+}
+
+func (hw HotWater) String() string {
+	return fmt.Sprintf("%d[ml] hot water", int(hw))
+}
+
+func (b Bean) String() string {
+	return fmt.Sprintf("%d[g] beans", int(b))
+}
+
+func (gb GroundBean) String() string {
+	return fmt.Sprintf("%d[g] ground beans", int(gb))
+}
+
+func (cups Coffee) String() string {
+	return fmt.Sprintf("%d cup(s) coffee", int(cups))
+}
+
+// 沖泡 1 杯咖啡所需的水量
+func (cups Coffee) Water() Water {
+	return Water(180*cups) / MilliLiterWater
+}
+
+// 沖泡 1 杯咖啡所需的熱水量
+func (cups Coffee) HotWater() HotWater {
+	return HotWater(180*cups) / MilliLiterHotWater
+}
+
+// 沖泡 1 杯咖啡所需的咖啡豆量
+func (cups Coffee) Beans() Bean {
+	return Bean(20*cups) / GramBeans
+}
+
+// 沖泡 1 杯咖啡所需咖啡粉量
+func (cups Coffee) GroundBeans() GroundBean {
+	return GroundBean(20*cups) / GramGroundBeans
+}
+
+func main() {
+	f, err := os.Create("trace.out")
+	if err != nil {
+		log.Fatalln("Error:", err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatalln("Error:", err)
+		}
+	}()
+
+	if err := trace.Start(f); err != nil {
+		log.Fatalln("Error:", err)
+	}
+	defer trace.Stop()
+
+	RunMyProgram()
+}
+
+var hotWater HotWater
+var groundBeans GroundBean
+var coffee Coffee
+
+func RunMyProgram() {
+	// 預計沖泡多少杯咖啡
+	const amountCoffee = 20 * CupsCoffee
+
+	ctx, task := trace.NewTask(context.Background(), "make coffee")
+	defer task.End()
+
+	// 材料
+	water := amountCoffee.Water()
+	beans := amountCoffee.Beans()
+
+	fmt.Println(water)
+	fmt.Println(beans)
+	var wg sync.WaitGroup
+	// 熱水
+
+	ch_hotWater := make(chan HotWater)
+	var mu_water sync.Mutex
+	for water > 0 {
+		wg.Add(1)
+		water -= 600 * MilliLiterWater
+		go func() {
+			mu_water.Lock()
+			defer mu_water.Unlock()
+			boil(ctx, 600*MilliLiterWater, ch_hotWater, &wg)
+		}()
+	}
+
+	// 咖啡粉
+	ch_groundBean := make(chan GroundBean)
+	var mu_bean sync.Mutex
+	for beans > 0 {
+		wg.Add(1)
+		beans -= 20 * GramBeans
+		go func() {
+			mu_bean.Lock()
+			defer mu_bean.Unlock()
+			grind(ctx, 20*GramBeans, ch_groundBean, &wg)
+		}()
+	}
+
+	// 沖泡咖啡
+
+	ch_coffee := make(chan Coffee)
+	var mu_coffee sync.Mutex
+	for ch_hotWater != nil && ch_groundBean != nil {
+		wg.Add(1)
+		mu_coffee.Lock()
+		defer mu_coffee.Unlock()
+		go brew(ctx, ch_hotWater, ch_groundBean, ch_coffee, &wg)
+	}
+	go func() {
+		wg.Wait()
+		close(ch_groundBean)
+		close(ch_hotWater)
+		close(ch_coffee)
+	}()
+	fmt.Println(hotWater)
+	fmt.Println(groundBeans)
+	fmt.Println(coffee)
+}
+
+// 燒開水
+func boil(ctx context.Context, water Water, ch_hotWater chan HotWater, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer trace.StartRegion(ctx, "boil").End()
+	time.Sleep(400 * time.Millisecond)
+	select {
+	case hw := <-ch_hotWater: // 原本有熱水 -> 通道內原本有數值，把煮好的熱水加上去
+		ch_hotWater <- HotWater(water) + hw
+	default: // 原本沒有水 -> 加上煮過的熱水
+		ch_hotWater <- HotWater(water)
+	}
+	hotWater += HotWater(water)
+}
+
+// 研磨
+func grind(ctx context.Context, beans Bean, ch_groundbean chan GroundBean, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer trace.StartRegion(ctx, "grind").End()
+	time.Sleep(200 * time.Millisecond)
+	select {
+	case gb := <-ch_groundbean:
+		ch_groundbean <- GroundBean(beans) + gb
+	default:
+		ch_groundbean <- GroundBean(beans)
+	}
+	groundBeans += GroundBean(beans)
+}
+
+// 沖泡
+func brew(ctx context.Context, ch_hotwater chan HotWater, ch_ground chan GroundBean, ch_coffee chan Coffee, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer trace.StartRegion(ctx, "brew").End()
+	var hw_v HotWater
+	var gb_v GroundBean
+	for {
+		select {
+		case hw, ok := <-ch_hotwater:
+			if ok {
+				hw_v = hw
+			}
+		case gb, ok := <-ch_ground:
+			if ok {
+				gb_v = gb
+			}
+		}
+
+		if hw_v >= 180 && gb_v >= 20 {
+			time.Sleep(1 * time.Second)
+			cups1 := Coffee(hw_v / (1 * CupsCoffee).HotWater())
+			cups2 := Coffee(gb_v / (1 * CupsCoffee).GroundBeans())
+			result := min(cups1, cups2)
+			select {
+			case coffee := <-ch_coffee:
+				hw_v -= HotWater(result) * 180
+				gb_v -= GroundBean(result) * 20
+				ch_coffee <- result + coffee
+			default:
+				ch_coffee <- result
+			}
+			coffee += result
+			break
+		}
+	}
+}
