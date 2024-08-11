@@ -129,15 +129,26 @@ func RunMyProgram() {
 		}()
 	}
 
+	var coffee Coffee
+	var remain_hw HotWater
+	var remain_gb GroundBean
+	cups := 4 * CupsCoffee
 	go func() {
 		for {
 			select {
 			case hw := <-ch_HotWater:
 				hotWater += hw
+				remain_hw += hw
 			case gb := <-ch_GroundBean:
 				groundBeans += gb
+				remain_gb += gb
 			case <-quit:
 				return
+			}
+			if remain_hw >= cups.HotWater() && remain_gb >= cups.GroundBeans() {
+				remain_hw -= cups.HotWater()
+				remain_gb -= cups.GroundBeans()
+				coffee += brew(ctx, cups.HotWater(), cups.GroundBeans())
 			}
 		}
 	}()
@@ -149,14 +160,6 @@ func RunMyProgram() {
 	close(quit)
 	fmt.Println(hotWater)
 	fmt.Println(groundBeans)
-	var coffee Coffee
-	cups := 4 * CupsCoffee
-	for hotWater >= cups.HotWater() && groundBeans >= cups.GroundBeans() {
-		hotWater -= cups.HotWater()
-		groundBeans -= cups.GroundBeans()
-		coffee += brew(ctx, cups.HotWater(), cups.GroundBeans())
-	}
-
 	fmt.Println(coffee)
 }
 
