@@ -159,9 +159,7 @@ func RunMyProgram() {
 			}
 		}
 	}()
-	go func() {
 
-	}()
 	wg.Wait()
 	quit <- true
 	close(ch_HotWater)
