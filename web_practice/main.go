@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-type student struct {
-	Name string
-	Age  int8
-}
-
 func FormatAsDate(t time.Time) string {
 	year, month, day := t.Date()
 	return fmt.Sprintf("%d-%02d-%02d", year, month, day)
@@ -29,6 +24,41 @@ func login(c *goo.Context) {
 	}
 }
 
+// 需要編號及任務內容
+type Todo struct {
+	Id   int    // 編號
+	Task string // 內容
+}
+
+var (
+	todoList      = []Todo{}
+	todoListIndex = 1
+)
+
+func todoListHandler(c *goo.Context) {
+	// 當使用GET時，fetch todo.html來渲染
+	if c.Method == "GET" {
+		c.HTML(http.StatusOK, "todo.html", goo.H{
+			"Todos": todoList,
+		})
+	} else if c.Method == "POST" {
+		// 當使用當中的POST時，抓取空格內的字串當成task
+		task := c.PostForm("task")
+		// 放入Todo當中並且依據原有的todoListIndex編號
+		newTodo := Todo{
+			Id:   todoListIndex,
+			Task: task,
+		}
+		todoListIndex++
+		// 放到原有的todolist中，且與html檔一起回傳
+		todoList = append(todoList, newTodo)
+
+		c.HTML(http.StatusOK, "todo.html", goo.H{
+			"Todos": todoList,
+		})
+	}
+}
+
 func main() {
 	r := goo.New()
 	r.Use(goo.Logger())
@@ -38,27 +68,13 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/assets", "./static")
 
-	stu1 := &student{Name: "gootutu", Age: 20}
-	stu2 := &student{Name: "Jack", Age: 22}
 	r.GET("/", func(c *goo.Context) {
 		c.HTML(http.StatusOK, "css.tmpl", nil)
-	})
-	r.GET("/students", func(c *goo.Context) {
-		c.HTML(http.StatusOK, "arr.tmpl", goo.H{
-			"title":  "goo",
-			"stuArr": [2]*student{stu1, stu2},
-		})
-	})
-
-	r.GET("/date", func(c *goo.Context) {
-		c.HTML(http.StatusOK, "custom_func.tmpl", goo.H{
-			"title": "goo",
-			"now":   time.Date(2019, 8, 17, 0, 0, 0, 0, time.UTC),
-		})
 	})
 
 	r.GET("/login", login)
 	r.POST("/login", login)
-
+	r.GET("/todo", todoListHandler)
+	r.POST("/todo", todoListHandler)
 	r.Run(":9999")
 }
