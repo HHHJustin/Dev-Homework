@@ -75,3 +75,27 @@ func main(){
 ```
 
 - 在</form>中使用{{ range .Todos }}方式，將所得到的TodoList依序顯示
+
+# 加入資料庫 Ver.
+## 創建資料庫
+<!-- // 1. 創建Database - TodoList
+// 2. 創建Table - TodoTable
+	// - Id(Primary key, Int, auto_increment), 
+	// - Task(string, required), 
+	// - Done(bool, default:fasle).
+	// - CreateAt
+	// - UpdateAt	
+// 3. 創建Gorm Model. -->
+## CRUD
+### R(Read)
+<!-- 使用Get fetch web page時，直接從資料庫讀取資料從Table中第一筆依序列出在Page上。(Done以box方式顯示)
+1. 建立可以顯示的HTML
+2. 利用GET抓取HTML -->
+### Create
+<!-- 頁面表格的最下面，新增一個PostForm，當輸入文字按下Enter後，將Id, Task, Done輸入資料庫當中，輸入後更新頁面將資料從新顯示在畫面。 -->
+### Update
+<!-- 每一行旁設計更新按鈕，按下後跳出更改Task畫面。
+-> 更新Task後更新頁面。
+按下Done可直接更改是否完成狀態。 -->
+### Delete
+每一行旁邊設置Delete按鈕，按下之後直接刪除該筆資料。後更新頁面。

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+            background-color: #ffffff;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        caption {
+            caption-side: top;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        td input, td button {
+            background-color: transparent;
+            border: none;
+            padding: 8px;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script>
+        function updateDoneStatus(id, checkbox) {
+            var done = checkbox.checked ? 1 : 0;
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/updateDone", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log('Update successful');
+                }
+            };
+            xhr.send("id=" + id + "&done=" + done);
+        }
+        function makeEditable(td, id) {
+            const originalTask = td.innerText;
+            
+            const form = document.createElement('form');
+            form.action = '/updateTask';
+            form.method = 'post';
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'id';
+            hiddenInput.value = id;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'task';
+            input.value = originalTask;
+
+            input.onkeydown = function(event) {
+                if (event.key === 'Enter') {
+                    form.submit();
+                }
+            };
+
+            form.appendChild(hiddenInput);
+            form.appendChild(input);
+
+            td.innerHTML = '';
+            td.appendChild(form);
+
+            input.focus();
+        }
+    </script>
+</head>
+<body>
+    <table>
+        <caption>Todo List</caption>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Task</th>
+                <th>Done</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .}}
+            <tr>
+                <td>{{.Index}}</td>
+                <td onclick="makeEditable(this, {{.Id}})">{{.Task}}</td>
+                <td>
+                    <input type="checkbox"
+                           {{if .Done}}checked="checked"{{end}}
+                           onchange="updateDoneStatus({{.Id}}, this)">
+                </td>
+                <td>
+                    <form action="/deleteTask" method="post">
+                        <input type="hidden" name="id" value="{{.Id}}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+                
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="3">No tasks found</td>
+            </tr>
+            {{end}}
+            <tr>
+                <form action="/todos" method="post">
+                    <td>New</td> <!-- ID 可以是 "New" 或者留空 -->
+                    <td><input type="text" name="task" placeholder="Enter new task" required></td>
+                    <td><button type="submit">Add Task</button></td>
+                </form>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
