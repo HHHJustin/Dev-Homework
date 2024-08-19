@@ -81,7 +81,7 @@ type Todo struct {
 </body>
 ```
 
-![image](https://github.com/HHHJustin/Dev-Homework/blob/main/coffee_problem/images/image.jpg)
+![image](https://github.com/HHHJustin/Dev-Homework/tree/main/web_practice/images/image.jpg)
 - 每筆資料包含:
     - ID: Index。
     - Task: 寫入的內容。
