@@ -1,101 +1,154 @@
 # Todo List
-## Todo 結構
+# Model
 ```go
 type Todo struct {
-	Id   int    // 編號
-	Task string // 內容
+	Id   int    `gorm:"primaryKey"`
+	Task string `gorm:"type:varchar(100);not null"`
+	Done bool   `gorm:"default:false"`
 }
 ```
-- 輸入的內容與其編號
-## Handler
-```go
-var (
-	todoList      = []Todo{}
-	todoListIndex = 1
-)
+```sql
++-------+--------------+------+-----+---------+----------------+
+| Field | Type         | Null | Key | Default | Extra          |
++-------+--------------+------+-----+---------+----------------+
+| id    | bigint       | NO   | PRI | NULL    | auto_increment |
+| task  | varchar(100) | NO   |     | NULL    |                |
+| done  | tinyint(1)   | YES  |     | 0       |                |
++-------+--------------+------+-----+---------+----------------+
+```
+- Id: 
+- Task:
+- Done:
+# HTML
+```html
+<body>
+    <table>
+        <caption>Todo List</caption>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Task</th>
+                <th>Done</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .}}
+            <tr>
+                <td>{{.Index}}</td>
+                <td onclick="makeEditable(this, {{.Id}})">{{.Task}}</td>
+                <td>
+                    <input type="checkbox"
+                           {{if .Done}}checked="checked"{{end}}
+                           onchange="updateDoneStatus({{.Id}}, this)">
+                </td>
+                <td>
+                    <form action="/deleteTask" method="post">
+                        <input type="hidden" name="id" value="{{.Id}}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+                
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="3">No tasks found</td>
+            </tr>
+            {{end}}
+            <tr>
+                <form action="/todos" method="post">
+                    <td>New</td> 
+                    <td><input type="text" name="task" placeholder="Enter new task" required></td>
+                    <td><button type="submit">Add Task</button></td>
+                </form>
+            </tr>
+        </tbody>
+    </table>
+</body>
+```
 
-func todoListHandler(c *goo.Context) {
-	// 當使用GET時，fetch todo.html來渲染
+# Router
+## GET & POST - /todos
+顯示網頁 + 新增Task
+```go
+func TodoListHandler(c *goo.Context, db *gorm.DB) {
+	// 從todos中抓取資料
+	var todos []database.Todo
+	result := db.Find(&todos)
+	if result.Error != nil {
+		panic("failed to fetch data")
+	}
 	if c.Method == "GET" {
-		c.HTML(http.StatusOK, "todo.html", goo.H{
-			"Todos": todoList,
-		})
-	} else if c.Method == "POST" {
-		// 當使用當中的POST時，抓取空格內的字串當成task
-		task := c.PostForm("task")
-		// 放入Todo當中並且依據原有的todoListIndex編號
-		newTodo := Todo{
-			Id:   todoListIndex,
+		var todoWithIndex []database.TodoWithIndex
+		for i, todo := range todos {
+			todoWithIndex = append(todoWithIndex, database.TodoWithIndex{
+				Index: i + 1,
+				Todo:  todo,
+			})
+		}
+		c.HTML(http.StatusOK, "todolist.html", todoWithIndex)
+	} else {
+		task := c.Req.FormValue("task")
+		todo := &database.Todo{
 			Task: task,
 		}
-		todoListIndex++
-		// 放到原有的todolist中，且與html檔一起回傳
-		todoList = append(todoList, newTodo)
-        // 依據或許的TodoList將傳到HTML渲染
-		c.HTML(http.StatusOK, "todo.html", goo.H{
-			"Todos": todoList,
-		})
+		createResult := db.Create(&todo)
+		if createResult.Error != nil {
+			log.Fatal("Failed to insert new todo:", result.Error)
+		}
+		log.Println("New todo inserted with ID:", todo.Id)
+		result = db.Find(&todos)
+		if result.Error != nil {
+			panic("failed to fetch data")
+		}
+		http.Redirect(c.Writer, c.Req, "/todos", http.StatusSeeOther)
 	}
 }
+```
 
-//...
-func main(){
-//...
-    r.GET("/todo", todoListHandler) 
-	r.POST("/todo", todoListHandler)
-    r.RUN(":9999")
+## POST - /updateTask
+更新Done
+```go
+func UpdateTask(c *goo.Context, db *gorm.DB) {
+	id := c.Req.FormValue("id")
+	task := c.Req.FormValue("task")
+	var todo database.Todo
+	if err := db.Find(&todo, id).Error; err != nil {
+		panic("Can't find the item")
+	}
+	todo.Task = task
+	db.Save(todo)
+	http.Redirect(c.Writer, c.Req, "/todos", http.StatusSeeOther)
 }
-
-```
-- todoList:存放目前為止所輸入的Todo。
-- todoListIndex:紀錄目前為止有多少Todo。
-
-## HTML內容
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List</title>
-</head>
-<body>
-    <h1>Todo List</h1>
-    <form action="/todo" method="post">
-        <input type="text" name="task" placeholder="New task">
-        <button type="submit">Add</button>
-    </form>
-    <ul>
-        {{ range .Todos }}
-        <li>{{ .Id }}. {{ .Task }}</li>
-        {{ end }}
-    </ul>
-</body>
-</html>
 ```
 
-- 在</form>中使用{{ range .Todos }}方式，將所得到的TodoList依序顯示
+## POST - /updateDone
+更新Task
+```go
+func UpdateDoneCheckbox(c *goo.Context, db *gorm.DB) {
+	id := c.Req.FormValue("id")
+	doneValue := c.Req.FormValue("done")
+	done, err := strconv.ParseBool(doneValue)
+	if err != nil {
+		panic("Invalid done value")
+	}
+	var todo database.Todo
+	if err := db.Find(&todo, id).Error; err != nil {
+		panic("Can't find the item")
+	}
+	todo.Done = done
+	db.Save(todo)
+}
+```
 
-# 加入資料庫 Ver.
-## 創建資料庫
-<!-- // 1. 創建Database - TodoList
-// 2. 創建Table - TodoTable
-	// - Id(Primary key, Int, auto_increment), 
-	// - Task(string, required), 
-	// - Done(bool, default:fasle).
-	// - CreateAt
-	// - UpdateAt	
-// 3. 創建Gorm Model. -->
-## CRUD
-### R(Read)
-<!-- 使用Get fetch web page時，直接從資料庫讀取資料從Table中第一筆依序列出在Page上。(Done以box方式顯示)
-1. 建立可以顯示的HTML
-2. 利用GET抓取HTML -->
-### Create
-<!-- 頁面表格的最下面，新增一個PostForm，當輸入文字按下Enter後，將Id, Task, Done輸入資料庫當中，輸入後更新頁面將資料從新顯示在畫面。 -->
-### Update
-<!-- 每一行旁設計更新按鈕，按下後跳出更改Task畫面。
--> 更新Task後更新頁面。
-按下Done可直接更改是否完成狀態。 -->
-### Delete
-每一行旁邊設置Delete按鈕，按下之後直接刪除該筆資料。後更新頁面。
+## POST - /deleteTask
+刪除Task
+```go
+func DeleteTask(c *goo.Context, db *gorm.DB) {
+	id := c.Req.FormValue("id")
+	var todo database.Todo
+	if err := db.Delete(&todo, id).Error; err != nil {
+		panic("Can't find the item")
+	}
+	http.Redirect(c.Writer, c.Req, "/todos", http.StatusSeeOther)
+}
+```
