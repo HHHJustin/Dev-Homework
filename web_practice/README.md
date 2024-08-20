@@ -120,6 +120,7 @@ func UpdateTask(c *goo.Context, db *gorm.DB) {
 	http.Redirect(c.Writer, c.Req, "/todos", http.StatusSeeOther)
 }
 ```
+如果使用者點選todo list中已存在的資料後面的checkbox，Serve端會抓取修改的id，並且利用id找到在todos中的位置，利用db.Save修改done的狀態。
 
 ## POST - /updateDone
 更新Task
