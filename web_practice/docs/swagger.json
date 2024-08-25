@@ -1,0 +1,460 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a todo list API",
+        "title": "Todo API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:9999",
+    "basePath": "/",
+    "paths": {
+        "/": {
+            "post": {
+                "description": "Authenticate a user and return a JWT token",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Log in a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful with JWT token",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Can't find the user or invalid username or password",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - Error creating token",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/deleteTask": {
+            "post": {
+                "description": "根據任務 ID 刪除任務",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "刪除任務",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "任務的 ID",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "303": {
+                        "description": "重定向到 /todos",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "找不到任務",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "伺服器錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "get": {
+                "description": "Displays the login HTML page for user authentication",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Render login page",
+                "responses": {
+                    "200": {
+                        "description": "HTML page with login form",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "get": {
+                "description": "Displays the registration HTML page for new user registration",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Render registration page",
+                "responses": {
+                    "200": {
+                        "description": "HTML page with registration form",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Register a new user with a username and password",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registration successful",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SuccessResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User already exists or password error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/todos": {
+            "get": {
+                "description": "Getting all todos from todos table.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Getting todo list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/database.TodoWithIndex"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create new task then return task.ID",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Create new task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "task",
+                        "name": "task",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/database.Todo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/updateDone": {
+            "post": {
+                "description": "根據任務 ID 更新任務的完成狀態 (done)",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "更新任務的完成狀態",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "任務的 ID",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "完成狀態 (true/false)",
+                        "name": "done",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功更新任務狀態",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "無效的完成狀態值",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "找不到任務",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "伺服器錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/updateTask": {
+            "post": {
+                "description": "Update the task",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Update task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "task",
+                        "name": "task",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "303": {
+                        "description": "Redirect to /todos",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Can't find the task",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error.",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "database.Todo": {
+            "type": "object",
+            "properties": {
+                "done": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "task": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/database.User"
+                },
+                "userID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "database.TodoWithIndex": {
+            "type": "object",
+            "properties": {
+                "done": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "task": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/database.User"
+                },
+                "userID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "database.User": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "todos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.Todo"
+                    }
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

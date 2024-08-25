@@ -1,0 +1,304 @@
+basePath: /
+definitions:
+  database.Todo:
+    properties:
+      done:
+        type: boolean
+      id:
+        type: integer
+      task:
+        type: string
+      user:
+        $ref: '#/definitions/database.User'
+      userID:
+        type: integer
+    type: object
+  database.TodoWithIndex:
+    properties:
+      done:
+        type: boolean
+      id:
+        type: integer
+      index:
+        type: integer
+      task:
+        type: string
+      user:
+        $ref: '#/definitions/database.User'
+      userID:
+        type: integer
+    type: object
+  database.User:
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        type: string
+      todos:
+        items:
+          $ref: '#/definitions/database.Todo'
+        type: array
+      username:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.SuccessResponse:
+    properties:
+      message:
+        type: string
+      token:
+        type: string
+    type: object
+host: localhost:9999
+info:
+  contact: {}
+  description: This is a todo list API
+  title: Todo API
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful with JWT token
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "401":
+          description: Unauthorized - Can't find the user or invalid username or password
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error - Error creating token
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Log in a user
+      tags:
+      - users
+  /deleteTask:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 根據任務 ID 刪除任務
+      parameters:
+      - description: 任務的 ID
+        in: formData
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "303":
+          description: 重定向到 /todos
+          schema:
+            type: string
+        "404":
+          description: 找不到任務
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 伺服器錯誤
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 刪除任務
+      tags:
+      - todos
+  /login:
+    get:
+      consumes:
+      - text/html
+      description: Displays the login HTML page for user authentication
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page with login form
+          schema:
+            type: string
+      summary: Render login page
+      tags:
+      - pages
+  /register:
+    get:
+      consumes:
+      - text/html
+      description: Displays the registration HTML page for new user registration
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page with registration form
+          schema:
+            type: string
+      summary: Render registration page
+      tags:
+      - pages
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Register a new user with a username and password
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Registration successful
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "409":
+          description: User already exists or password error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - users
+  /todos:
+    get:
+      consumes:
+      - application/json
+      description: Getting all todos from todos table.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/database.TodoWithIndex'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Getting todo list
+      tags:
+      - todos
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Create new task then return task.ID
+      parameters:
+      - description: task
+        in: formData
+        name: task
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/database.Todo'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create new task
+      tags:
+      - todos
+  /updateDone:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 根據任務 ID 更新任務的完成狀態 (done)
+      parameters:
+      - description: 任務的 ID
+        in: formData
+        name: id
+        required: true
+        type: string
+      - description: 完成狀態 (true/false)
+        in: formData
+        name: done
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新任務狀態
+          schema:
+            type: string
+        "400":
+          description: 無效的完成狀態值
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 找不到任務
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 伺服器錯誤
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 更新任務的完成狀態
+      tags:
+      - todos
+  /updateTask:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Update the task
+      parameters:
+      - description: id
+        in: formData
+        name: id
+        required: true
+        type: string
+      - description: task
+        in: formData
+        name: task
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "303":
+          description: Redirect to /todos
+          schema:
+            type: string
+        "404":
+          description: Can't find the task
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Server error.
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update task
+      tags:
+      - todos
+swagger: "2.0"

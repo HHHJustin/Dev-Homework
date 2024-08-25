@@ -153,3 +153,34 @@ func DeleteTask(c *goo.Context, db *gorm.DB) {
 	http.Redirect(c.Writer, c.Req, "/todos", http.StatusSeeOther)
 }
 ```
+
+# Replace goo by Gin
+安裝Gin套件
+```
+go get -u github.com/gin-gonic/gin 
+```
+將所有有使用到goo的部分改成gin
+
+# Install Swagger
+```
+go install github.com/swaggo/swag/cmd/swag@latest
+go get -u github.com/swaggo/gin-swagger
+go get -u github.com/swaggo/files
+```
+
+# Add Swagger annotation
+
+
+
+# Next Step
+加上
+測試Swagger API (後續使用Swagger測試)
+建立gorm user model(id, username, password, role)
+Database創建users table
+建立Token interface
+Golang建立JWT Token function(Create & Verify)
+建立Login router(GET & POST)
+修改HTML (Login & TodoList)
+建立auth middleware
+修改操作Todolist router變成authrouter
+必須區分成employee & senior

@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	USERNAME = "demo"
-	PASSWORD = "demo123"
+	USERNAME = "yaya"
+	PASSWORD = "zxcv4567"
 	NETWORK  = "tcp"
 	SERVER   = "127.0.0.1"
 	PORT     = 3306
-	DATABASE = "demo"
+	DATABASE = "todolist"
 )
 
 func ConnectDatabase() (*gorm.DB, error) {

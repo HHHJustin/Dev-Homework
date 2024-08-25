@@ -35,7 +35,7 @@
         }
         input[type="checkbox"] {
             transform: scale(1.5);
-            margin: 10px;
+            margin: 0px;
         }
         button:hover {
             background-color: #0056b3;
@@ -100,28 +100,35 @@
         <caption>Todo List</caption>
         <thead>
             <tr>
+                <td colspan="4" style="text-align: right;">
+                    <form action="/logout" method="post">
+                        <button type="submit" class="logout-button">Logout</button>
+                    </form>
+                </td>
+            </tr>
+            <tr>
                 <th>ID</th>
                 <th>Task</th>
                 <th>Done</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {{range .}}
             <tr>
                 <td>{{.Index}}</td>
-                <td onclick="makeEditable(this, {{.Id}})">{{.Task}}</td>
+                <td onclick="makeEditable(this, {{.ID}})">{{.Task}}</td>
                 <td>
                     <input type="checkbox"
                            {{if .Done}}checked="checked"{{end}}
-                           onchange="updateDoneStatus({{.Id}}, this)">
+                           onchange="updateDoneStatus({{.ID}}, this)">
                 </td>
                 <td>
                     <form action="/deleteTask" method="post">
-                        <input type="hidden" name="id" value="{{.Id}}">
+                        <input type="hidden" name="id" value="{{.ID}}">
                         <button type="submit">Delete</button>
                     </form>
                 </td>
-                
             </tr>
             {{else}}
             <tr>
