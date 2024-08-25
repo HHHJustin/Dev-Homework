@@ -55,7 +55,7 @@ type Todo struct {
 
 # Page
 ## Login
-![image](https://hackmd.io/_uploads/B1TZBEusA.png)
+![image](https://github.com/HHHJustin/Dev-Homework/blob/main/web_practice/images/Login.png)
 - PostForm:
     - Username: 使用者帳號
     - Password: 使用者密碼
@@ -64,7 +64,7 @@ type Todo struct {
     - Register: 註冊，切換至"/register"。
 
 ## Register
-![image](https://hackmd.io/_uploads/HJiXSN_jR.png)
+![image](https://github.com/HHHJustin/Dev-Homework/blob/main/web_practice/images/Register.png)
 - PostForm:
     - Username: 使用者帳號
     - Password: 使用者密碼
@@ -72,7 +72,7 @@ type Todo struct {
     - Register: 認證username及password，如果username被使用過，會認證錯誤。
 
 ## Toto List 
-![image](https://hackmd.io/_uploads/rJM3VEdjA.png)
+![image](https://github.com/HHHJustin/Dev-Homework/blob/main/web_practice/images/TodoList.png)
 - Table:
     - Logout: 登出
     - ID: Index。
