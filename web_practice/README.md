@@ -173,14 +173,3 @@ go get -u github.com/swaggo/files
 
 
 # Next Step
-加上
-測試Swagger API (後續使用Swagger測試)
-建立gorm user model(id, username, password, role)
-Database創建users table
-建立Token interface
-Golang建立JWT Token function(Create & Verify)
-建立Login router(GET & POST)
-修改HTML (Login & TodoList)
-建立auth middleware
-修改操作Todolist router變成authrouter
-必須區分成employee & senior
