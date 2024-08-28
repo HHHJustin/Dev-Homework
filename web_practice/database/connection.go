@@ -2,22 +2,20 @@ package database
 
 import (
 	"fmt"
+	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-const (
-	USERNAME = "yaya"
-	PASSWORD = "zxcv4567"
-	NETWORK  = "tcp"
-	SERVER   = "127.0.0.1"
-	PORT     = 3306
-	DATABASE = "todolist"
-)
-
 func ConnectDatabase() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", USERNAME, PASSWORD, NETWORK, SERVER, PORT, DATABASE)
+	USERNAME := os.Getenv("DB_USER")
+	PASSWORD := os.Getenv("DB_PASS")
+	SERVER := os.Getenv("DB_HOST")
+	PORT := os.Getenv("DB_PORT")
+	DATABASE := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", USERNAME, PASSWORD, SERVER, PORT, DATABASE)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err

@@ -1,0 +1,35 @@
+# 第一階段：構建 Go 二進制文件
+FROM golang:1.21.6-alpine AS builder
+
+# 設定工作目錄
+WORKDIR /app
+
+# 安裝必要的工具（例如 git）
+RUN apk add --no-cache git
+
+# 複製 go.mod 和 go.sum 以使用緩存層
+COPY go.mod go.sum ./
+
+# 下載所有依賴項
+RUN go mod download
+
+# 複製所有文件到容器中
+COPY . .
+
+# 編譯 Go 二進制文件，並且將其編譯為靜態二進制
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+
+# 第二階段：構建最終映像
+FROM alpine:latest
+
+# 設定工作目錄
+WORKDIR /root/
+
+# 複製二進制文件從 builder 階段
+COPY --from=builder /app/main .
+
+# 設定環境變數
+ENV PORT=9999
+
+# 執行二進制文件
+CMD ["./main"]

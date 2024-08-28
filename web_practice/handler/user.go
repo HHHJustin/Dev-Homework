@@ -100,6 +100,6 @@ func LoginHandler(c *gin.Context, db *gorm.DB) {
 }
 
 func LogoutHandler(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "localhost", false, true)
+	c.SetCookie("token", "", -1, "/", "127.0.0.1", false, true)
 	c.Redirect(http.StatusFound, "/")
 }
