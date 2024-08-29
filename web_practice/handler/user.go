@@ -95,7 +95,7 @@ func LoginHandler(c *gin.Context, db *gorm.DB) {
 		c.String(http.StatusInternalServerError, "Error creating token")
 		return
 	}
-	c.SetCookie("token", tokenString, 3600, "/", "localhost", false, true)
+	c.SetCookie("token", tokenString, 3600, "/", "127.0.0.1", false, true)
 	c.Redirect(http.StatusSeeOther, "/todos")
 }
 

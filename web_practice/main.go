@@ -24,6 +24,7 @@ func main() {
 	}
 
 	router := gin.New()
+	
 	router.Use(gin.Logger())
 	router.SetFuncMap(template.FuncMap{
 		"FormatAsDate": handler.FormatAsDate,

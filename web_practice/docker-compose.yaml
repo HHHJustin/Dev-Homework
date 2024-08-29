@@ -1,4 +1,14 @@
 services:
+  web:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - go-app
+    networks:
+      - mynet
+
   mysql:
     image: mysql/mysql-server:8.0
     container_name: mysql8
@@ -15,9 +25,9 @@ services:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s  # 每隔10秒檢查一次
-      timeout: 5s    # 每次檢查等待5秒
-      retries: 10    # 增加重試次數為10次
+      interval: 10s  
+      timeout: 5s    
+      retries: 10   
 
   go-app:
     build: 
